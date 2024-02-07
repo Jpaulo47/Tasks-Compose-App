@@ -2,7 +2,7 @@
 
 ## to-do list app for classroom example.
 
-## Libs and Tecnologies
+## Libs and technologies
 
 - JetpackCompose
 - LiveData
