@@ -1,6 +1,7 @@
 package com.joaorodrigues.taskscomposeapp.view
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,16 +22,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.joaorodrigues.taskscomposeapp.Constants.GlobalConstants
 import com.joaorodrigues.taskscomposeapp.components.ButtonSave
 import com.joaorodrigues.taskscomposeapp.components.TextBox
+import com.joaorodrigues.taskscomposeapp.repository.TasksRepository
 import com.joaorodrigues.taskscomposeapp.ui.theme.Purple40
 import com.joaorodrigues.taskscomposeapp.ui.theme.RADIO_BUTTON_GREEN_DISABLED
 import com.joaorodrigues.taskscomposeapp.ui.theme.RADIO_BUTTON_GREEN_ENABLED
@@ -39,6 +44,8 @@ import com.joaorodrigues.taskscomposeapp.ui.theme.RADIO_BUTTON_RED_UNSELECTED
 import com.joaorodrigues.taskscomposeapp.ui.theme.RADIO_BUTTON_YELLOW_SELECTED
 import com.joaorodrigues.taskscomposeapp.ui.theme.RADIO_BUTTON_YELLOW_UNSELECTED
 import com.joaorodrigues.taskscomposeapp.ui.theme.White
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +53,10 @@ import com.joaorodrigues.taskscomposeapp.ui.theme.White
 fun TasksSave(
     navController: NavController
 ) {
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val tasksRepository = TasksRepository()
 
     Scaffold(
 
@@ -150,8 +161,33 @@ fun TasksSave(
             }
 
             ButtonSave(
+
                 onClick = {
-                    /*TODO*/
+
+                    var message = true
+                    scope.launch(Dispatchers.IO){
+                        if (titleTask.isEmpty() || descriptionTask.isEmpty()){
+                            message = false
+                        }else if (titleTask.isNotEmpty() && descriptionTask.isNotEmpty()){
+                            val priority = when {
+                                priorityLow -> GlobalConstants.PRIORITY_LOW
+                                priorityMedium -> GlobalConstants.PRIORITY_MEDIUM
+                                priorityHigh -> GlobalConstants.PRIORITY_HIGH
+                                else -> GlobalConstants.PRIORITY_NONE
+                            }
+                            tasksRepository.saveTask(titleTask, descriptionTask, priority)
+                            message = true
+                        }
+                    }
+
+                    scope.launch(Dispatchers.Main) {
+                        if (message){
+                            Toast.makeText(context, "Task saved successfully", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        }else{
+                            Toast.makeText(context, "Error saving task, fill in the fields ", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
